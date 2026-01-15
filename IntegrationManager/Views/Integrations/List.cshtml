@@ -1,0 +1,223 @@
+﻿@model List<IntegrationMaster>
+
+@{
+    ViewData["Title"] = "Integrations";
+}
+
+<div class="container-fluid mt-4">
+
+    <!-- ✅ Title -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold">Integrations</h2>
+            <p class="text-muted">View and filter all system integrations</p>
+        </div>
+    </div>
+
+    <!-- ✅ Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <form method="get" asp-action="Index" asp-controller="Integrations">
+
+                <div class="row align-items-end g-3">
+
+                    <!-- ✅ Market -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Market</label>
+                        <select class="form-select" name="market" id="marketDropdown">
+                            <option value="">Select Market</option>
+                            @foreach (var market in ViewBag.Markets)
+                            {
+                                <option value="@market"
+                                        selected="@(ViewBag.SelectedMarket == market)">
+                                    @market
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- ✅ Legal Entity (CASCADING) -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Legal Entity</label>
+                        <select class="form-select" name="legalEntity" id="legalEntityDropdown">
+                            <option value="">Select Entity</option>
+                            @foreach (var entity in ViewBag.LegalEntities)
+                            {
+                                <option value="@entity"
+                                        selected="@(ViewBag.SelectedLegalEntity == entity)">
+                                    @entity
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- ✅ Integration -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Integration</label>
+                        <select class="form-select" name="integrationName">
+                            <option value="">Select Integration</option>
+                            @foreach (var integration in ViewBag.Integrations)
+                            {
+                                <option value="@integration"
+                                        selected="@(ViewBag.SelectedIntegration == integration)">
+                                    @integration
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- ✅ Buttons -->
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="button" id="applyFilterBtn" class="btn btn-primary w-100">
+                            Apply Filter
+                        </button>
+
+                        <button type="button" id="clearFilterBtn" class="btn btn-outline-secondary w-100">
+                            Clear
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ✅ Grid -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white fw-semibold">
+            Integration List
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Integration</th>
+                            <th>Market</th>
+                            <th>Legal Entity</th>
+                            <th>Type</th>
+                            <th>Environment</th>
+                            <th>Transformation Function</th>
+                            <th>FDD</th>   
+                            <th>TDD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="integrationGrid">
+                        @await Html.PartialAsync("_IntegrationGridPartial", Model)
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <!-- ✅ jQuery (Required) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- ✅ CASCADING DROPDOWN SCRIPT -->
+    <script>
+        $(document).ready(function () {
+
+            $('#marketDropdown').change(function () {
+
+                var selectedMarket = $(this).val();
+                var legalEntityDropdown = $('#legalEntityDropdown');
+
+                legalEntityDropdown.empty();
+                legalEntityDropdown.append('<option value="">Loading...</option>');
+
+                if (selectedMarket !== '') {
+
+                    $.ajax({
+                        url: '/Integrations/GetLegalEntitiesByMarket',
+                        type: 'GET',
+                        data: { market: selectedMarket },
+                        success: function (data) {
+
+                            legalEntityDropdown.empty();
+                            legalEntityDropdown.append('<option value="">Select Entity</option>');
+
+                            $.each(data, function (index, item) {
+                                legalEntityDropdown.append(
+                                    '<option value="' + item + '">' + item + '</option>'
+                                );
+                            });
+                        },
+                        error: function () {
+                            alert('Error loading Legal Entities');
+                        }
+                    });
+                }
+                else {
+                    legalEntityDropdown.empty();
+                    legalEntityDropdown.append('<option value="">Select Entity</option>');
+                }
+            });
+
+        });
+
+            $(document).ready(function () {
+
+            // ✅ APPLY FILTER (AJAX GRID UPDATE)
+            $('#applyFilterBtn').click(function () {
+
+                var market = $('#marketDropdown').val();
+                var legalEntity = $('#legalEntityDropdown').val();
+                var integrationName = $('select[name="integrationName"]').val();
+
+                $.ajax({
+                    url: '/Integrations/Filter',
+                    type: 'GET',
+                    data: {
+                        market: market,
+                        legalEntity: legalEntity,
+                        integrationName: integrationName
+                    },
+                    beforeSend: function () {
+                        $('#integrationGrid').html(
+                            '<tr><td colspan="7" class="text-center py-4">Loading...</td></tr>'
+                        );
+                    },
+                    success: function (data) {
+                        $('#integrationGrid').html(data);
+                    },
+                    error: function () {
+                        alert('Error while filtering data.');
+                    }
+                });
+            });
+
+            // ✅ CLEAR FILTER (AJAX RESET)
+            $('#clearFilterBtn').click(function () {
+
+                $('#marketDropdown').val('');
+                $('#legalEntityDropdown').empty().append('<option value="">Select Entity</option>');
+                $('select[name="integrationName"]').val('');
+
+                $.ajax({
+                    url: '/Integrations/Filter',
+                    type: 'GET',
+                    success: function (data) {
+                        $('#integrationGrid').html(data);
+                    }
+                });
+            });
+        });
+
+            $(document).ready(function () {
+
+            $('#marketDropdown').val('');
+            $('#legalEntityDropdown').empty().append('<option value="">Select Entity</option>');
+            $('select[name="integrationName"]').val('');
+
+        });
+    </script>
+}

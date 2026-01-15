@@ -1,0 +1,428 @@
+﻿@model List<IntegrationMaster>
+@{
+    ViewData["Title"] = "Integration Details";
+    var header = Model.First();
+
+    bool showFileHandler = header.FileSize > 2097152;
+}
+
+<div class="container-fluid mt-5">
+    <h2 class="text-center fw-bold mb-5">
+        Integration Flow: @header.IntegrationName
+    </h2>
+
+    <div class="flow-canvas">
+
+        <!-- AutomasterFT -->
+        <div class="card-automaster">
+            @header.IntegrationName
+        </div>
+
+        <!-- FILE HANDLER (ONLY WHEN FILE > 2MB) -->
+        @if (showFileHandler)
+        {
+            <div class="card-filehandler">
+                <h5>File Handler</h5>
+                <p>Large File Processor</p>
+            </div>
+        }
+
+        <!-- Common Upload -->
+        <div class="card-upload">
+            <h5>Common Upload</h5>
+            <ul>
+                @foreach (var item in Model.Select(x => x.CommonUpload).Distinct())
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </div>
+
+        <!-- Transformation -->
+        <div class="card-transformation">
+            <h5>Transformation<br />Layer</h5>
+            <ul>
+                @foreach (var item in Model)
+                {
+                    <li>@item.TransformationFunction</li>
+                }
+            </ul>
+        </div>
+
+        <!-- Processing -->
+        <div class="card-processing">
+            <h5>Processing<br />Layer</h5>
+            <ul>
+                @foreach (var item in Model.Select(x => x.ProcessingLayer).Distinct())
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </div>
+
+        <!-- D365 -->
+        <div class="card-d365">
+            <h5>D365</h5>
+            <ul>
+                @foreach (var item in Model.Select(x => x.Dynamics).Distinct())
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        </div>
+
+        <!-- BYOL -->
+        <div class="card-byol">
+            <h5>BYOL</h5>
+            <ul>
+                @foreach (var item in Model.Select(x => x.BYOL).Distinct())
+                {
+                    if (!string.IsNullOrWhiteSpace(item))
+                    {
+                        <li>@item</li>
+                    }
+                }
+            </ul>
+        </div>
+
+        <!-- Log Layer -->
+        <div class="card-log">
+            <h5>Log Layer</h5>
+        </div>
+
+        <!-- ARROWS -->
+        <!-- CONDITIONAL UP ARROW BASED ON FILE SIZE -->
+        @if (showFileHandler)
+        {
+            <!-- File Handler → Common Upload -->
+            <div class="arrow-v arrow-filehandler-up"></div>
+        }
+        else
+        {
+            <!-- Automaster → Common Upload (Normal Flow) -->
+            <div class="arrow-v arrow-auto-up"></div>
+        }
+
+        <!-- ARROWS WHEN FileHandler EXISTS -->
+        @if (showFileHandler)
+        {
+            <!-- Integration → File Handler -->
+            <div class="arrow-h arrow-auto-filehandler"></div>
+        }
+        else
+        {
+            <!-- Automaster → Upload (Normal Flow) -->
+            <div class="arrow-h arrow-auto-upload"></div>
+        }
+
+        <!-- Upload → then ↓ -->
+        <div class="arrow-h arrow-upload-right"></div>
+        <div class="arrow-v arrow-upload-down"></div>
+
+        <!-- Transformation → Processing -->
+        <div class="arrow-h arrow-transform-processing"></div>
+
+    </div>
+</div>
+
+<style>
+
+    .flow-canvas {
+        position: relative;
+        width: 1400px;
+        height: 650px;
+        margin: auto;
+    }
+
+    /* ================= CARDS ================= */
+
+    .card-automaster {
+        position: absolute;
+        left: 50px;
+        top: 360px;
+        font-weight: 600;
+    }
+
+    .card-filehandler {
+        position: absolute;
+        left: 250px;
+        top: 330px;
+        width: 220px;
+        height: 150px;
+        color: white;
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(255,193,7,0.9), rgba(255,152,0,0.9));
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-top: 2px solid rgba(255, 255, 255, 0.7);
+        border-left: 2px solid rgba(255, 255, 255, 0.7);
+        border-bottom: 3px solid rgba(160, 90, 0, 0.6);
+        border-right: 3px solid rgba(160, 90, 0, 0.6);
+        box-shadow: 8px 8px 20px rgba(160, 90, 0, 0.45), inset 1px 1px 3px rgba(255, 255, 255, 0.6);
+        font-weight: 600;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+        .card-filehandler:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 14px 14px 30px rgba(160, 90, 0, 0.6), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+        }
+
+    .card-upload {
+        position: absolute;
+        left: 230px;
+        top: 10px;
+        width: 260px;
+        height: 240px;
+        text-align: center;
+    }
+
+    .card-transformation {
+        position: absolute;
+        left: 520px;
+        top: 230px;
+        width: 270px;
+        height: 240px;
+        text-align: center;
+    }
+
+    .card-processing {
+        position: absolute;
+        left: 880px;
+        top: 230px;
+        width: 270px;
+        height: 240px;
+        text-align: center;
+    }
+
+    .card-d365 {
+        position: absolute;
+        left: 1100px;
+        top: 10px;
+        width: 250px;
+        height: 190px;
+        text-align: center;
+    }
+
+    .card-byol {
+        position: absolute;
+        left: 520px;
+        top: 490px;
+        width: 270px;
+        height: 170px;
+        text-align: center;
+    }
+
+    .card-log {
+        position: absolute;
+        left: 880px;
+        top: 490px;
+        width: 300px;
+        height: 170px;
+        text-align: center;
+    }
+
+
+    .card-automaster,
+    .card-upload,
+    .card-transformation,
+    .card-processing,
+    .card-d365,
+    .card-byol,
+    .card-log {
+        background: linear-gradient( 135deg, rgba(135, 206, 250, 0.85), rgba(70, 160, 230, 0.85) );
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-radius: 14px;
+        color: white;
+        padding: 20px;
+        border-top: 2px solid rgba(255, 255, 255, 0.7);
+        border-left: 2px solid rgba(255, 255, 255, 0.7);
+        border-bottom: 3px solid rgba(20, 80, 120, 0.6);
+        border-right: 3px solid rgba(20, 80, 120, 0.6);
+        box-shadow: 8px 8px 20px rgba(20, 60, 100, 0.45), inset 1px 1px 3px rgba(255, 255, 255, 0.6);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+        .card-automaster:hover,
+        .card-upload:hover,
+        .card-transformation:hover,
+        .card-processing:hover,
+        .card-d365:hover,
+        .card-byol:hover,
+        .card-log:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 14px 14px 30px rgba(20, 60, 100, 0.6), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+        }
+
+        .card-automaster h5,
+        .card-filehandler h5,
+        .card-upload h5,
+        .card-transformation h5,
+        .card-processing h5,
+        .card-d365 h5,
+        .card-byol h5,
+        .card-log h5 {
+            color: #003049;
+            font-weight: 700;
+        }
+
+        .card-transformation ul {
+            margin-top: 12px;
+            padding-left: 22px;
+            font-size: 14px;
+        }
+
+        .card-transformation li {
+            margin-bottom: 6px;
+        }
+
+
+        .card-upload ul,
+        .card-transformation ul,
+        .card-processing ul,
+        .card-d365 ul,
+        .card-byol ul {
+            margin-top: 12px;
+            padding-left: 22px;
+            font-size: 15px;
+            color: white;
+        }
+
+        .card-upload li,
+        .card-transformation li,
+        .card-processing li,
+        .card-d365 li,
+        .card-byol li {
+            margin-bottom: 6px;
+            color: white;
+        }
+
+    /* ================= ARROWS ================= */
+
+    .arrow-h {
+        position: absolute;
+        height: 6px;
+        background: #001F3F;
+    }
+
+        .arrow-h::after {
+            content: "";
+            position: absolute;
+            right: -12px;
+            top: -7px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 14px solid #001F3F;
+        }
+
+    .arrow-v {
+        position: absolute;
+        width: 6px;
+        background: #001F3F;
+    }
+
+        .arrow-v::after {
+            content: "";
+            position: absolute;
+            bottom: -12px;
+            left: -7px;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-top: 14px solid #001F3F;
+        }
+
+    /* Automaster ↑ */
+    .arrow-auto-up {
+        left: 120px;
+        top: 140px;
+        height: 210px;
+    }
+
+        /* Triangle Arrow Head at TOP */
+        .arrow-auto-up::before {
+            content: "";
+            position: absolute;
+            top: -18px;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border-left: 11px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 18px solid #001F3F; 
+        }
+
+        /* REMOVE the DOWN arrow styling if it exists */
+        .arrow-auto-up::after {
+            display: none;
+        }
+
+    /* File Handler → Common Upload UP ARROW */
+    .arrow-filehandler-up {
+        position: absolute;
+        left: 350px; 
+        top: 270px; 
+        height: 50px;
+        width: 6px;
+        background: #001F3F;
+    }
+
+        /* Arrow Head */
+        .arrow-filehandler-up::before {
+            content: "";
+            position: absolute;
+            top: -18px;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border-left: 11px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 18px solid #001F3F;
+        }
+
+        /* Remove Down Arrow */
+        .arrow-filehandler-up::after {
+            display: none;
+        }
+
+    .arrow-auto-filehandler {
+        left: 170px;
+        top: 390px;
+        width: 60px;
+    }
+
+    /* Automaster → Upload */
+    .arrow-auto-upload {
+        left: 120px;
+        top: 120px;
+        width: 100px;
+    }
+
+    /* Upload → then ↓ */
+    .arrow-upload-right {
+        left: 500px;
+        top: 120px;
+        width: 140px;
+    }
+
+    .arrow-upload-down {
+        left: 644px;
+        top: 120px;
+        height: 100px;
+    }
+
+    /* Transformation → Processing */
+    .arrow-transform-processing {
+        left: 790px;
+        top: 350px;
+        width: 80px;
+    }
+
+    /* Transformation ↓ BYOL */
+    .arrow-transform-byol {
+        left: 650px;
+        top: 510px;
+        height: 60px;
+    }
+</style>

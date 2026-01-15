@@ -1,0 +1,83 @@
+﻿@model List<IntegrationMaster>
+
+@{
+    var index = 1;
+}
+
+@if (Model != null && Model.Any())
+{
+    foreach (var item in Model)
+    {
+        string envClass = item.Environment?.ToUpper() switch
+        {
+            "TEST" => "bg-success",
+            "UAT" => "bg-warning",
+            "PROD" => "bg-info",
+            _ => "bg-secondary"
+        };
+
+        <tr>
+            <td>@index</td>
+
+            <!-- ✅ CLICKABLE INTEGRATION NAME -->
+            <td>
+                <a asp-controller="Integrations"
+                   asp-action="Details"
+                   asp-route-name="@item.IntegrationName"
+                   asp-route-market="@item.Market"
+                   asp-route-entity="@item.LegalEntity"
+                   class="fw-bold text-primary text-decoration-none">
+                    @item.IntegrationName
+                </a>
+            </td>
+
+            <td>@item.Market</td>
+            <td>@item.LegalEntity</td>
+            <td>@item.IntegrationType</td>
+            <td>
+                <span class="badge @envClass">
+                    @item.Environment
+                </span>
+            </td>
+            <td>@item.TransformationFunction</td>
+            <td>
+                @if (!string.IsNullOrEmpty(item.FDDLink))
+                {
+                    <a href="@item.FDDLink"
+                       target="_blank"
+                       class="btn btn-sm btn-outline-primary">
+                        FDD Link
+                    </a>
+                }
+                else
+                {
+                    <span class="text-muted">N/A</span>
+                }
+            </td>
+            <td>
+                @if (!string.IsNullOrEmpty(item.TDDLink))
+                {
+                    <a href="@item.TDDLink"
+                       target="_blank"
+                       class="btn btn-sm btn-outline-success">
+                        TDD Link
+                    </a>
+                }
+                else
+                {
+                    <span class="text-muted">N/A</span>
+                }
+            </td>
+        </tr>
+
+        index++;
+    }
+}
+else
+{
+    <tr>
+        <td colspan="7" class="text-center text-muted py-5">
+            No integrations found.
+        </td>
+    </tr>
+}
